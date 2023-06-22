@@ -1,4 +1,4 @@
-DevicesCheckBot
+# DevicesCheckBot
 
 This is an application for computer clubs that will help them keep track of devices connected to computers.
 
