@@ -1,5 +1,6 @@
 package com.telegram.devices_check_bot.handlers;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -7,9 +8,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Component
+@Slf4j
 public class PropertiesHandler {
 
-    private static final String PROP_PATH = "src/main/resources/config.properties";
+    private static final String CONFIG_PROP_PATH = "src/main/resources/config.properties";
+    private static final String ADMIN_PROP_PATH = "src/main/resources/admins.properties";
     private static final String ERR = "ERROR: File not found!";
 
     public String getMousesFromProperties() {
@@ -34,20 +37,19 @@ public class PropertiesHandler {
 
 
     public String getPropertyByKey(String key) {
-
         Properties properties = new Properties();
         String value = "";
-        try (FileInputStream fis = new FileInputStream(PROP_PATH)) {
+        try (FileInputStream fis = new FileInputStream(CONFIG_PROP_PATH)) {
             properties.load(fis);
             value = properties.getProperty(key);
         } catch (IOException e) {
-            System.err.println(ERR);
+            log.error(ERR);
         }
         return value;
     }
 
     public String getAllProperties() {
-        try (FileInputStream fis = new FileInputStream(PROP_PATH);
+        try (FileInputStream fis = new FileInputStream(CONFIG_PROP_PATH);
              BufferedReader br = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8))) {
             StringBuilder sb = new StringBuilder();
             String line;
@@ -57,37 +59,42 @@ public class PropertiesHandler {
             }
             return sb.toString();
         } catch (IOException e) {
-            throw new RuntimeException("e");
+            log.error(ERR);
         }
+        return "Server error has been occurred";
     }
 
-    private void addProperty(String key, String property) {
-
+    private void addProperty(String key, String property, String path) {
         Properties properties = new Properties();
 
-        try (InputStream fis = new FileInputStream(PROP_PATH);
-             OutputStream out = new FileOutputStream(PROP_PATH)) {
-
+        try (FileInputStream fis = new FileInputStream(path);) {
             properties.load(fis);
-
-
             properties.setProperty(key, property);
-            properties.store(out, "");
         } catch (IOException e) {
-            System.err.println(ERR);
+            log.error(ERR);
+        }
+
+        try (OutputStream out = new FileOutputStream(path)) {
+            properties.store(out, null);
+        } catch (IOException e) {
+            log.error(ERR);
         }
     }
 
-    private void replaceProperty(String key, String property) {
+    private void replaceProperty(String key, String property, String path) {
         Properties properties = new Properties();
 
-        try (FileInputStream fis = new FileInputStream(PROP_PATH);
-             OutputStream out = new FileOutputStream(PROP_PATH)) {
+        try (FileInputStream fis = new FileInputStream(path);) {
             properties.load(fis);
             properties.replace(key, property);
-            properties.store(out, "");
         } catch (IOException e) {
-            System.err.println(ERR);
+            log.error(ERR);
+        }
+
+        try (OutputStream out = new FileOutputStream(path)) {
+            properties.store(out, null);
+        } catch (IOException e) {
+            log.error(ERR);
         }
     }
 
@@ -103,7 +110,7 @@ public class PropertiesHandler {
                 .replace("[", "")
                 .replace("]", "")
                 .trim();
-        addProperty("mouses", newProperty);
+        addProperty("mouses", newProperty, CONFIG_PROP_PATH);
     }
 
     public void addKeyboardsInProperties(List<String> property) {
@@ -118,7 +125,7 @@ public class PropertiesHandler {
                 .replace("[", "")
                 .replace("]", "")
                 .trim();
-        addProperty("keyboards", newProperty);
+        addProperty("keyboards", newProperty, CONFIG_PROP_PATH);
     }
 
     public void addHeadphonesInProperties(List<String> property) {
@@ -133,20 +140,26 @@ public class PropertiesHandler {
                 .replace("[", "")
                 .replace("]", "")
                 .trim();
-        addProperty("headphones", newProperty);
+        addProperty("headphones", newProperty, CONFIG_PROP_PATH);
     }
 
     public void setAlarmDelay(String delay) {
         if (Integer.parseInt(delay) > 0) {
             delay = String.valueOf(Integer.parseInt(delay) * 1000);
-            replaceProperty("delay.alarm", delay);
+            replaceProperty("delay.alarm", delay, CONFIG_PROP_PATH);
         }
     }
 
     public void setListenDelay(String delay) {
         if (Integer.parseInt(delay) > 0) {
             delay = String.valueOf(Integer.parseInt(delay) * 1000);
-            replaceProperty("delay.listen", delay);
+            replaceProperty("delay.listen", delay, CONFIG_PROP_PATH);
         }
     }
+
+    public void addAdmin(String message){
+
+    }
+
+
 }

@@ -1,16 +1,19 @@
-package com.telegram.devices_check_bot.handlers;
+package com.telegram.devices_check_bot.handlers.server.handlers;
 
+import com.telegram.devices_check_bot.handlers.PropertiesHandler;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@ChannelHandler.Sharable
 public class ServerHandler extends SimpleChannelInboundHandler<String> {
     private PropertiesHandler propertiesHandler = new PropertiesHandler();
 
     @Autowired
-    private ClientMessageHandler clientMessageHandler;
+    private EventMessageHandler eventMessageHandler;
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, String message) throws InterruptedException {
@@ -18,7 +21,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
         if (message.equals("config")) {
             ctx.writeAndFlush("#config_data\n" + propertiesHandler.getAllProperties());
         }
-        clientMessageHandler.msg(message);
+        eventMessageHandler.msg(message);
     }
 
     @Override

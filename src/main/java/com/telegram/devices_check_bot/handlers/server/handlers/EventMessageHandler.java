@@ -1,14 +1,14 @@
-package com.telegram.devices_check_bot.handlers;
+package com.telegram.devices_check_bot.handlers.server.handlers;
 
-import com.telegram.devices_check_bot.DevicesCheckBot;
+import com.telegram.devices_check_bot.handlers.bot.handlers.MessageReplyHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ClientMessageHandler {
-
+public class EventMessageHandler {
     @Autowired
-    private DevicesCheckBot devicesCheckBot;
+    private MessageReplyHandler messageReplyHandler;
+
     public void msg(String message) {
 
 
@@ -24,7 +24,7 @@ public class ClientMessageHandler {
             }
 
             String pcName = alarmParams[2];
-            devicesCheckBot.sendAlarmMessage(chatId, pcName, device);
+            messageReplyHandler.sendAlarmMessage(chatId, pcName, device);
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.telegram.devices_check_bot.server;
 
-import com.telegram.devices_check_bot.handlers.ServerHandler;
+import com.telegram.devices_check_bot.handlers.server.handlers.ServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -13,10 +13,12 @@ import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class Server {
     private static final int PORT = 4242;
     @Autowired
@@ -44,7 +46,7 @@ public class Server {
                         });
 
                 ChannelFuture channelFuture = serverBootstrap.bind(PORT).syncUninterruptibly();
-                System.out.println("Server started on port " + PORT);
+                log.info("Server started on port " + PORT);
 
                 channelFuture.channel().closeFuture().syncUninterruptibly();
             } finally {
