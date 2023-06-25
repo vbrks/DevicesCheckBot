@@ -4,6 +4,7 @@ import com.telegram.devices_check_bot.handlers.bot.handlers.CallbackReplyHandler
 import com.telegram.devices_check_bot.handlers.bot.handlers.MessageReplyHandler;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -16,8 +17,10 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 @Slf4j
 @Component
 public class DevicesCheckBot extends TelegramLongPollingBot {
-    private MessageReplyHandler messageReplyHandler = new MessageReplyHandler(this);
-    private CallbackReplyHandler callbackReplyHandler = new CallbackReplyHandler(this);
+    @Autowired
+    private MessageReplyHandler messageReplyHandler;
+    @Autowired
+    private CallbackReplyHandler callbackReplyHandler;
 
     public DevicesCheckBot(@Value("${bot.token}") String botToken) {
         super(botToken);

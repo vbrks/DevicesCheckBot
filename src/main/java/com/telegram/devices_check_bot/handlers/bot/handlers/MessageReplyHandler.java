@@ -3,7 +3,9 @@ package com.telegram.devices_check_bot.handlers.bot.handlers;
 import com.telegram.devices_check_bot.DevicesCheckBot;
 import com.telegram.devices_check_bot.handlers.PropertiesHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -16,49 +18,60 @@ import java.util.List;
 @Component
 public class MessageReplyHandler {
     private DevicesCheckBot bot;
-
-    private final PropertiesHandler propertiesHandler = new PropertiesHandler();
-    @Value("${admin}")
-    private String adminUsername;
+    @Autowired
+    private PropertiesHandler propertiesHandler;
     private boolean isInReplyAwait = false;
     private final String AWAIT = "AWAIT";
     private String botPreviousMessageType = AWAIT;
 
-
-    public MessageReplyHandler(DevicesCheckBot devicesCheckBot) {
+    @Autowired
+    public MessageReplyHandler(@Lazy DevicesCheckBot devicesCheckBot) {
         this.bot = devicesCheckBot;
     }
 
     public void replyToUser(Long chatId, String username, String message) {
         log.info("Message from user: " + message);
-        if (isInReplyAwait) {
-            if (!botPreviousMessageType.equals(AWAIT)) {
-                switch (botPreviousMessageType) {
-                    case "mouse" -> addMousesCommand(chatId, message);
-                    case "keyboard" -> addKeyboardsCommand(chatId, message);
-                    case "headphones" -> addHeadphonesCommand(chatId, message);
-                    case "listen" -> setListenDelayCommand(chatId, message);
-                    case "alarm" -> setAlarmDelayCommand(chatId, message);
+        if (username.equals("vibrokesa")) {
+            if (isInReplyAwait) {
+                if (!botPreviousMessageType.equals(AWAIT)) {
+                    switch (botPreviousMessageType) {
+                        case "mouse" -> addMousesCommand(chatId, message);
+                        case "keyboard" -> addKeyboardsCommand(chatId, message);
+                        case "headphones" -> addHeadphonesCommand(chatId, message);
+                        case "listen" -> setListenDelayCommand(chatId, message);
+                        case "alarm" -> setAlarmDelayCommand(chatId, message);
+                    }
+                }
+            } else {
+                switch (message) {
+                    case "/start" -> startCommand(chatId, username);
+                    case "/help" -> helpCommand(chatId);
+                    case "/add_mouses" -> addMousesCommand(chatId, message);
+                    case "/add_keyboards" -> addKeyboardsCommand(chatId, message);
+                    case "/add_headphones" -> addHeadphonesCommand(chatId, message);
+                    case "/delete_mouse" ->
+                            deleteMouseCommand(chatId, message);         // TODO: сделать методы для delete команд
+                    case "/delete_keyboard" ->
+                            deleteKeyboardCommand(chatId, message);   // TODO: сделать методы для delete команд
+                    case "/delete_headphone" ->
+                            deleteHeadphoneCommand(chatId, message); // TODO: сделать методы для delete команд
+                    case "/set_listen_timeout" -> setListenDelayCommand(chatId, message);
+                    case "/set_alarm_timeout" -> setAlarmDelayCommand(chatId, message);
+                    default -> unknownCommand(chatId);
                 }
             }
         } else {
             switch (message) {
                 case "/start" -> startCommand(chatId, username);
                 case "/help" -> helpCommand(chatId);
-                case "/add_mouses" -> addMousesCommand(chatId, message);
-                case "/add_keyboards" -> addKeyboardsCommand(chatId, message);
-                case "/add_headphones" -> addHeadphonesCommand(chatId, message);
-                case "/set_listen_timeout" -> setListenDelayCommand(chatId, message);
-                case "/set_alarm_timeout" -> setAlarmDelayCommand(chatId, message);
-                default -> unknownCommand(chatId);
             }
+
         }
     }
 
     private void addMousesCommand(Long chatId, String msg) {
-
         if (isInReplyAwait) {
-            msg = msg.replaceAll(" ", "");
+            msg = msg.replace(" ", "");
             List<String> mouses = Arrays.asList(msg.trim().split(","));
             propertiesHandler.addMousesInProperties(mouses);
             isInReplyAwait = false;
@@ -72,7 +85,7 @@ public class MessageReplyHandler {
 
     private void addKeyboardsCommand(Long chatId, String msg) {
         if (isInReplyAwait) {
-            msg = msg.replaceAll(" ", "");
+            msg = msg.replace(" ", "");
             List<String> keyboards = Arrays.asList(msg.trim().split(","));
             propertiesHandler.addKeyboardsInProperties(keyboards);
             isInReplyAwait = false;
@@ -86,7 +99,7 @@ public class MessageReplyHandler {
 
     private void addHeadphonesCommand(Long chatId, String msg) {
         if (isInReplyAwait) {
-            msg = msg.replaceAll(" ", "");
+            msg = msg.replace(" ", "");
             List<String> headphones = Arrays.asList(msg.trim().split(","));
             propertiesHandler.addHeadphonesInProperties(headphones);
             isInReplyAwait = false;
@@ -94,6 +107,39 @@ public class MessageReplyHandler {
         } else {
             bot.sendMessage(chatId, "Ведите Id оборудования");
             botPreviousMessageType = "headphones";
+            isInReplyAwait = true;
+        }
+    }
+
+    private void deleteMouseCommand(Long chatId, String msg) {
+        if (isInReplyAwait) {
+            isInReplyAwait = false;
+            bot.sendMessage(chatId, "");
+        } else {
+            bot.sendMessage(chatId, "");
+            botPreviousMessageType = "delete_mouse";
+            isInReplyAwait = true;
+        }
+    }
+
+    private void deleteKeyboardCommand(Long chatId, String msg) {
+        if (isInReplyAwait) {
+            isInReplyAwait = false;
+            bot.sendMessage(chatId, "");
+        } else {
+            bot.sendMessage(chatId, "");
+            botPreviousMessageType = "delete_mouse";
+            isInReplyAwait = true;
+        }
+    }
+
+    private void deleteHeadphoneCommand(Long chatId, String msg) {
+        if (isInReplyAwait) {
+            isInReplyAwait = false;
+            bot.sendMessage(chatId, "");
+        } else {
+            bot.sendMessage(chatId, "");
+            botPreviousMessageType = "delete_mouse";
             isInReplyAwait = true;
         }
     }
@@ -124,8 +170,9 @@ public class MessageReplyHandler {
         }
     }
 
-    private void startCommand(Long chatId, String userName) {
-        String text = "Добро пожаловать в бот, " + userName + "\n" + "Твой Chat ID: " + chatId;
+    private void startCommand(Long chatId, String username) {
+        String text = "Добро пожаловать в бот, " + username + "\nНапиши /help для того чтобы увидеть что делают команды бота.";
+        propertiesHandler.addUser(username, chatId.toString());
         bot.sendMessage(chatId, text);
     }
 
@@ -151,7 +198,6 @@ public class MessageReplyHandler {
 
     public void sendAlarmMessage(Long chatId, String pcName, String device) {//h_disabled_on_ADM-01
         String text = "⚠Предупреждение⚠\n" + "\n" + "На компьютере: " + pcName + "\n" + "Отключенно утройство: " + device;
-
         bot.sendMessage(chatId, text, getAlarmKeyboard(pcName));
     }
 

@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 @Service
 @ChannelHandler.Sharable
 public class ServerHandler extends SimpleChannelInboundHandler<String> {
+    @Autowired
     private PropertiesHandler propertiesHandler = new PropertiesHandler();
-
     @Autowired
     private EventMessageHandler eventMessageHandler;
 
@@ -19,9 +19,8 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
     protected void channelRead0(ChannelHandlerContext ctx, String message) throws InterruptedException {
         System.out.println("Received message from client: " + message);
         if (message.equals("config")) {
-            ctx.writeAndFlush("#config_data\n" + propertiesHandler.getAllProperties());
-        }
-        eventMessageHandler.msg(message);
+            ctx.writeAndFlush("#config_data\n" + propertiesHandler.getAllConfigProperties());
+        }else eventMessageHandler.alarmReply(message);
     }
 
     @Override
