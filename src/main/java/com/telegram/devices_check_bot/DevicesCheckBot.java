@@ -47,9 +47,8 @@ public class DevicesCheckBot extends TelegramLongPollingBot {
         }
 
         if (update.hasCallbackQuery()) {
-            Long chatId = callback.getMessage().getChatId();
             String username = callback.getMessage().getChat().getUserName();
-            log.info("i catch callback from user: "  + callback.getData());
+            Long chatId = callback.getMessage().getChatId();
             callbackReplyHandler.replyToUser(chatId, username, callback);
         }
     }
@@ -57,6 +56,16 @@ public class DevicesCheckBot extends TelegramLongPollingBot {
     public void sendMessage(Long chatId, String text) {
         String chatIdStr = String.valueOf(chatId);
         SendMessage sendMessage = new SendMessage(chatIdStr, text);
+
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendMessage(String chatId, String text) {
+        SendMessage sendMessage = new SendMessage(chatId, text);
 
         try {
             execute(sendMessage);

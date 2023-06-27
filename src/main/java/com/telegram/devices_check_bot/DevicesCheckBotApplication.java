@@ -11,4 +11,5 @@ public class DevicesCheckBotApplication {
         SpringApplication.run(DevicesCheckBotApplication.class, args);
     }
 
+
 }

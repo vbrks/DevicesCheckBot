@@ -29,7 +29,6 @@ public class Server {
         new Thread(() -> {
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
             EventLoopGroup workerGroup = new NioEventLoopGroup();
-
             try {
                 ServerBootstrap serverBootstrap = new ServerBootstrap();
                 serverBootstrap.group(bossGroup, workerGroup)
@@ -44,7 +43,6 @@ public class Server {
                                 pipeline.addLast(serverHandler);
                             }
                         });
-
                 ChannelFuture channelFuture = serverBootstrap.bind(PORT).syncUninterruptibly();
                 log.info("Server started on port " + PORT);
 

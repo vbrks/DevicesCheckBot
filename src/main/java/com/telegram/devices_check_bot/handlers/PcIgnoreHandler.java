@@ -2,10 +2,7 @@ package com.telegram.devices_check_bot.handlers;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -27,10 +24,10 @@ public class PcIgnoreHandler {
 
     public void startTrackIgnoredPc(){
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        executorService.scheduleAtFixedRate(this::ignoredPcTracker, 0, 5, TimeUnit.SECONDS);
+        executorService.scheduleAtFixedRate(this::ignoredPcTracker, 0, 120, TimeUnit.SECONDS);
     }
     public void addPcToIgnoreList(String pcName) {
-        pcIgnoreList.put(pcName, LocalDateTime.now().plusSeconds(10));
+        pcIgnoreList.put(pcName, LocalDateTime.now().plusHours(1));
     }
     public Map<String, LocalDateTime> getPcIgnoreList() {
         return new HashMap<>(this.pcIgnoreList);

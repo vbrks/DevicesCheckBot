@@ -4,9 +4,11 @@ import com.telegram.devices_check_bot.handlers.PropertiesHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @ChannelHandler.Sharable
 public class ServerHandler extends SimpleChannelInboundHandler<String> {
@@ -17,7 +19,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, String message) throws InterruptedException {
-        System.out.println("Received message from client: " + message);
+        log.info("Received message from client: " + message);
         if (message.equals("config")) {
             ctx.writeAndFlush("#config_data\n" + propertiesHandler.getAllConfigProperties());
         }else eventMessageHandler.alarmReply(message);

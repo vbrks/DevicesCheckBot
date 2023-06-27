@@ -3,16 +3,22 @@ package com.telegram.devices_check_bot.handlers.bot.handlers;
 import com.telegram.devices_check_bot.DevicesCheckBot;
 import com.telegram.devices_check_bot.handlers.PcIgnoreHandler;
 
+import com.telegram.devices_check_bot.handlers.PropertiesHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Slf4j
 @Component
 public class CallbackReplyHandler {
     private DevicesCheckBot bot;
+    @Autowired
+    private PropertiesHandler propertiesHandler;
     @Autowired
     private PcIgnoreHandler pcIgnoreHandler;
     @Autowired
@@ -25,9 +31,16 @@ public class CallbackReplyHandler {
         String action = callbackMessage[0];
         String pcName = callbackMessage[1];
 
+        LocalDateTime ignoreEnding = LocalDateTime.now().plusHours(1);
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("HH:mm:ss");
+        String ignoreEndingFormatted = ignoreEnding.format(format);
+
         if (action.equals("forget")) {
             pcIgnoreHandler.addPcToIgnoreList(pcName);
-            bot.sendMessage(chatId, pcName + " добавлен в игнор на 1 час");
+            bot.sendMessage(chatId, "Оповещения от " + pcName + " будут игнорироваться до\n" + ignoreEndingFormatted);
         }
+        String messageToAdmin = "Пользователь " + username + " поставил компьютер " + pcName + " в игнор на 1 час!" + "\n" +
+                "Время: " + LocalDateTime.now().format(format);
+        bot.sendMessage(propertiesHandler.getAdminChatId(), messageToAdmin);
     }
 }

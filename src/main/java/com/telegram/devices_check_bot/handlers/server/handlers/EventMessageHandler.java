@@ -6,6 +6,8 @@ import com.telegram.devices_check_bot.handlers.bot.handlers.MessageReplyHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
 public class EventMessageHandler {
     @Autowired
@@ -19,19 +21,20 @@ public class EventMessageHandler {
         String[] alarmParams = message.split("_");
         String device = alarmParams[0];
         String pcName = alarmParams[2];
-        long chatId = 452197607L;
-
-        if (pcIgnoreHandler.getPcIgnoreList().containsKey(pcName)){
+        Map<String, String> users = propertiesHandler.getUserList();
+        if (pcIgnoreHandler.getPcIgnoreList().containsKey(pcName)) {
             return;
+        } else {
+            users.forEach((username, chatId) -> sendAlarm(device, pcName, Long.parseLong(chatId)));
         }
+    }
 
-        if (message.contains("disabled")) {
-            switch (device){
-                case "m" -> device = "мышь \uD83D\uDDB1";
-                case "k" -> device = "клавиатура ⌨";
-                case "h" -> device = "наушники \uD83C\uDFA7";
-            }
-            messageReplyHandler.sendAlarmMessage(chatId, pcName, device);
+    private void sendAlarm(String device, String pcName, long chatId) {
+        switch (device) {
+            case "m" -> device = "мышь \uD83D\uDDB1";
+            case "k" -> device = "клавиатура ⌨";
+            case "h" -> device = "наушники \uD83C\uDFA7";
         }
+        messageReplyHandler.sendAlarmMessage(chatId, pcName, device);
     }
 }

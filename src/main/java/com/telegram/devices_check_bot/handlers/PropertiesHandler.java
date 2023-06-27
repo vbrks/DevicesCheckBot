@@ -1,14 +1,11 @@
 package com.telegram.devices_check_bot.handlers;
 
-import io.netty.handler.codec.socks.SocksRequestType;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.BiConsumer;
 
 @Component
 @Slf4j
@@ -17,11 +14,14 @@ public class PropertiesHandler {
     private static final String CONFIG_PROP_PATH = "src/main/resources/config.properties";
     private static final String USERS_PROP_PATH = "src/main/resources/users.properties";
     private static final String ERR = "ERROR: File not found!";
-    private Properties properties = new Properties();
+    private static final String MOUSES = "mouses";
+    private static final String KEYBOARDS = "keyboards";
+    private static final String HEADPHONES = "headphones";
 
-    public String getPropertyByKey(String key) {
+    public String getPropertyByKey(String key, String path) {
+        Properties properties = new Properties();
         String value = "";
-        try (FileInputStream fis = new FileInputStream(CONFIG_PROP_PATH)) {
+        try (FileInputStream fis = new FileInputStream(path)) {
             properties.load(fis);
             value = properties.getProperty(key);
         } catch (IOException e) {
@@ -47,6 +47,7 @@ public class PropertiesHandler {
     }
 
     private void addProperty(String key, String value, String path) {
+        Properties properties = new Properties();
         try (FileInputStream fis = new FileInputStream(path);) {
             properties.load(fis);
             properties.setProperty(key, value);
@@ -62,6 +63,7 @@ public class PropertiesHandler {
     }
 
     private void replaceProperty(String key, String value, String path) {
+        Properties properties = new Properties();
         try (FileInputStream fis = new FileInputStream(path);) {
             properties.load(fis);
             properties.replace(key, value);
@@ -76,33 +78,20 @@ public class PropertiesHandler {
         }
     }
 
-    private void deleteProperty(String key, String path) {
-        try (FileInputStream fis = new FileInputStream(path);) {
-            properties.load(fis);
-            properties.remove(key);
-        } catch (IOException e) {
-            log.error(ERR);
-        }
-
-        try (OutputStream out = new FileOutputStream(path)) {
-            properties.store(out, null);
-        } catch (IOException e) {
-            log.error(ERR);
-        }
-    }
-
-    public List<String> getUserList() {
-        List<String> users = new ArrayList<>();
+    public Map<String, String> getUserList() {
+        Properties properties = new Properties();
+        Map<String, String> users = new HashMap<>();
         try (FileInputStream fis = new FileInputStream(USERS_PROP_PATH)) {
             properties.load(fis);
-            properties.forEach((key, value) -> users.add(key + "=" + value));
+            properties.forEach((key, value) -> users.put((String) key, (String) value));
         } catch (IOException e) {
             log.error(ERR);
         }
         return users;
     }
 
-    private boolean isEmpty(String path){
+    private boolean propertiesIsEmpty(String path) {
+        Properties properties = new Properties();
         try (FileInputStream fis = new FileInputStream(path)) {
             properties.load(fis);
             return properties.isEmpty();
@@ -112,69 +101,114 @@ public class PropertiesHandler {
         return false;
     }
 
+    private boolean propertiesContainsValue(String value, String path) {
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream(path)) {
+            properties.load(fis);
+            return properties.contains(value);
+        } catch (IOException e) {
+            log.error(ERR);
+        }
+        return false;
+    }
+
     public String getMousesFromProperties() {
-        return getPropertyByKey("mouses");
+        return getPropertyByKey(MOUSES, CONFIG_PROP_PATH);
     }
 
     public String getKeyboardsFromProperties() {
-        return getPropertyByKey("keyboards");
+        return getPropertyByKey(KEYBOARDS, CONFIG_PROP_PATH);
     }
 
     public String getHeadphonesFromProperties() {
-        return getPropertyByKey("headphones");
+        return getPropertyByKey(HEADPHONES, CONFIG_PROP_PATH);
+    }
+
+    public void deleteMouseFromProperties(String deviceNumber) {
+        int numToDelete = Integer.parseInt(deviceNumber);
+        List<String> mouses = new ArrayList<>(Arrays.stream(getMousesFromProperties().split(",")).toList());
+        for (String mouse : mouses) {
+            mouse = mouse.trim();
+        }
+        mouses.remove(numToDelete);
+        replaceProperty(MOUSES, "", CONFIG_PROP_PATH);
+        addMousesInProperties(mouses);
+    }
+
+    public void deleteKeyboardFromProperties(String deviceNumber) {
+        int numToDelete = Integer.parseInt(deviceNumber);
+        List<String> keyboards = new ArrayList<>(Arrays.stream(getKeyboardsFromProperties().split(",")).toList());
+        for (String keyboard : keyboards) {
+            keyboard = keyboard.trim();
+        }
+        keyboards.remove(numToDelete);
+        replaceProperty(KEYBOARDS, "", CONFIG_PROP_PATH);
+        addKeyboardsInProperties(keyboards);
+    }
+
+    public void deleteHeadphonesFromProperties(String deviceNumber) {
+        int numToDelete = Integer.parseInt(deviceNumber);
+        List<String> headphones = new ArrayList<>(Arrays.stream(getHeadphonesFromProperties().split(",")).toList());
+        for (String headphone : headphones) {
+            headphone = headphone.trim();
+        }
+        headphones.remove(numToDelete);
+        replaceProperty(HEADPHONES, "", CONFIG_PROP_PATH);
+        addKeyboardsInProperties(headphones);
     }
 
     public String getAlarmDelayFromProperties() {
-        return getPropertyByKey("delay.alarm");
+        int timeoutInSeconds = Integer.parseInt(getPropertyByKey("delay.alarm", CONFIG_PROP_PATH)) / 1000;
+        return String.valueOf(timeoutInSeconds);
     }
 
     public String getListenDelayFromProperties() {
-        return getPropertyByKey("delay.listen");
+        int timeoutInSeconds = Integer.parseInt(getPropertyByKey("delay.listen", CONFIG_PROP_PATH)) / 1000;
+        return String.valueOf(timeoutInSeconds);
     }
 
     public void addMousesInProperties(List<String> property) {
         String[] oldMouses = getMousesFromProperties().trim().split(",");
-        Set<String> mousesFromProperties = new HashSet<>();
+        Set<String> mousesFromProperties = new TreeSet<>();
 
         if (oldMouses.length > 0) {
-            mousesFromProperties = new HashSet<>(List.of(oldMouses));
+            mousesFromProperties = new TreeSet<>(List.of(oldMouses));
         }
         mousesFromProperties.addAll(property);
         String newProperty = mousesFromProperties.toString()
                 .replace("[", "")
                 .replace("]", "")
                 .trim();
-        addProperty("mouses", newProperty, CONFIG_PROP_PATH);
+        addProperty(MOUSES, newProperty, CONFIG_PROP_PATH);
     }
 
     public void addKeyboardsInProperties(List<String> property) {
         String[] oldKeyboards = getKeyboardsFromProperties().trim().split(",");
-        Set<String> keyboardsFromProperties = new HashSet<>();
+        Set<String> keyboardsFromProperties = new TreeSet<>();
 
         if (oldKeyboards.length > 0) {
-            keyboardsFromProperties = new HashSet<>(List.of(oldKeyboards));
+            keyboardsFromProperties = new TreeSet<>(List.of(oldKeyboards));
         }
         keyboardsFromProperties.addAll(property);
         String newProperty = keyboardsFromProperties.toString()
                 .replace("[", "")
                 .replace("]", "")
                 .trim();
-        addProperty("keyboards", newProperty, CONFIG_PROP_PATH);
+        addProperty(KEYBOARDS, newProperty, CONFIG_PROP_PATH);
     }
 
     public void addHeadphonesInProperties(List<String> property) {
         String[] oldHeadphones = getHeadphonesFromProperties().trim().split(",");
-        Set<String> headphonesFromProperties = new HashSet<>();
-
+        Set<String> headphonesFromProperties = new TreeSet<>();
         if (oldHeadphones.length > 0) {
-            headphonesFromProperties = new HashSet<>(List.of(oldHeadphones));
+            headphonesFromProperties = new TreeSet<>(List.of(oldHeadphones));
         }
         headphonesFromProperties.addAll(property);
         String newProperty = headphonesFromProperties.toString()
                 .replace("[", "")
                 .replace("]", "")
                 .trim();
-        addProperty("headphones", newProperty, CONFIG_PROP_PATH);
+        addProperty(HEADPHONES, newProperty, CONFIG_PROP_PATH);
     }
 
     public void setAlarmDelay(String delay) {
@@ -192,17 +226,31 @@ public class PropertiesHandler {
     }
 
     public void addUser(String username, String chatId) {
-        System.out.println(isEmpty(USERS_PROP_PATH));
-        if (isEmpty(USERS_PROP_PATH)) {
-            addProperty(username + ".admin", chatId, USERS_PROP_PATH);
-        } else {
+        if (propertiesIsEmpty(USERS_PROP_PATH)) {
+            addProperty("admin." + username, chatId, USERS_PROP_PATH);
+        } else if (!propertiesContainsValue(chatId, USERS_PROP_PATH)) {
             addProperty(username, chatId, USERS_PROP_PATH);
         }
     }
 
-    public void deleteUser(String username) {
-        deleteProperty(username, USERS_PROP_PATH);
+    public String getAdminChatId() {
+        Map<String, String> users = getUserList();
+        StringBuilder sb = new StringBuilder();
+        users.forEach((username, chatId) -> {
+            if (username.contains("admin")) sb.append(chatId);
+        });
+        if (!sb.toString().equals("")) {
+            return sb.toString();
+        }
+        return "0";
     }
 
-
+    public String getAdminUsername() {
+        Map<String, String> users = getUserList();
+        StringBuilder sb = new StringBuilder();
+        users.forEach((username, chatId) -> {
+            if (username.contains("admin")) sb.append(username);
+        });
+        return sb.toString().replace("admin.", "");
+    }
 }

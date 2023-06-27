@@ -2,14 +2,17 @@ package com.telegram.devices_check_bot.handlers.bot.handlers;
 
 import com.telegram.devices_check_bot.DevicesCheckBot;
 import com.telegram.devices_check_bot.handlers.PropertiesHandler;
+
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +23,8 @@ public class MessageReplyHandler {
     private DevicesCheckBot bot;
     @Autowired
     private PropertiesHandler propertiesHandler;
-    private boolean isInReplyAwait = false;
+    private String CANCEL_MESSAGE = "Напиши /cancel чтобы отменить текущее действие.";
+    private String WRONG_FORMAT_MESSAGE = "Неправильный формат данных, введи число.";
     private final String AWAIT = "AWAIT";
     private String botPreviousMessageType = AWAIT;
 
@@ -31,142 +35,224 @@ public class MessageReplyHandler {
 
     public void replyToUser(Long chatId, String username, String message) {
         log.info("Message from user: " + message);
-        if (username.equals("vibrokesa")) {
-            if (isInReplyAwait) {
-                if (!botPreviousMessageType.equals(AWAIT)) {
-                    switch (botPreviousMessageType) {
-                        case "mouse" -> addMousesCommand(chatId, message);
-                        case "keyboard" -> addKeyboardsCommand(chatId, message);
-                        case "headphones" -> addHeadphonesCommand(chatId, message);
-                        case "listen" -> setListenDelayCommand(chatId, message);
-                        case "alarm" -> setAlarmDelayCommand(chatId, message);
-                    }
+        if (message.equals("/cancel")) {
+            botPreviousMessageType = AWAIT;
+        }
+        if (chatId == Long.parseLong(propertiesHandler.getAdminChatId())) {
+            if (!botPreviousMessageType.equals(AWAIT)) {
+                switch (botPreviousMessageType) {
+                    case "mouse" -> addMousesCommand(chatId, message);
+                    case "keyboard" -> addKeyboardsCommand(chatId, message);
+                    case "headphones" -> addHeadphonesCommand(chatId, message);
+                    case "listen" -> setListenDelayCommand(chatId, message);
+                    case "alarm" -> setAlarmDelayCommand(chatId, message);
+                    case "delete_mouse" -> deleteMouseCommand(chatId, message);
+                    case "delete_keyboard" -> deleteKeyboardCommand(chatId, message);
+                    case "delete_headphones" -> deleteHeadphonesCommand(chatId, message);
+                    default -> botPreviousMessageType = AWAIT;
                 }
             } else {
                 switch (message) {
                     case "/start" -> startCommand(chatId, username);
-                    case "/help" -> helpCommand(chatId);
+                    case "/help" -> adminHelpCommand(chatId);
                     case "/add_mouses" -> addMousesCommand(chatId, message);
                     case "/add_keyboards" -> addKeyboardsCommand(chatId, message);
                     case "/add_headphones" -> addHeadphonesCommand(chatId, message);
-                    case "/delete_mouse" ->
-                            deleteMouseCommand(chatId, message);         // TODO: сделать методы для delete команд
-                    case "/delete_keyboard" ->
-                            deleteKeyboardCommand(chatId, message);   // TODO: сделать методы для delete команд
-                    case "/delete_headphone" ->
-                            deleteHeadphoneCommand(chatId, message); // TODO: сделать методы для delete команд
+                    case "/delete_mouse" -> deleteMouseCommand(chatId, message);
+                    case "/delete_keyboard" -> deleteKeyboardCommand(chatId, message);
+                    case "/delete_headphone" -> deleteHeadphonesCommand(chatId, message);
                     case "/set_listen_timeout" -> setListenDelayCommand(chatId, message);
                     case "/set_alarm_timeout" -> setAlarmDelayCommand(chatId, message);
+                    case "/current_settings" -> currentSettings(chatId);
+                    case "/cancel" -> cancelCommand(chatId);
                     default -> unknownCommand(chatId);
                 }
             }
         } else {
             switch (message) {
                 case "/start" -> startCommand(chatId, username);
-                case "/help" -> helpCommand(chatId);
+                case "/help" -> userHelpCommand(chatId);
+                default -> unknownCommand(chatId);
             }
-
         }
     }
 
     private void addMousesCommand(Long chatId, String msg) {
-        if (isInReplyAwait) {
-            msg = msg.replace(" ", "");
+        String text = "Ведите Id мышек.\n"
+                + "\uD83D\uDCDD Список текущих девайсов: " +
+                propertiesHandler.getMousesFromProperties() + "\n" +
+                CANCEL_MESSAGE;
+        if (!botPreviousMessageType.equals(AWAIT)) {
             List<String> mouses = Arrays.asList(msg.trim().split(","));
             propertiesHandler.addMousesInProperties(mouses);
-            isInReplyAwait = false;
-            bot.sendMessage(chatId, "Мышки добавлены");
+            botPreviousMessageType = AWAIT;
+            bot.sendMessage(chatId, "Мышки добавлены!");
         } else {
-            bot.sendMessage(chatId, "Ведите Id оборудования");
+            bot.sendMessage(chatId, text);
             botPreviousMessageType = "mouse";
-            isInReplyAwait = true;
         }
     }
 
     private void addKeyboardsCommand(Long chatId, String msg) {
-        if (isInReplyAwait) {
-            msg = msg.replace(" ", "");
+        String text = "Ведите Id клавиатур.\n"
+                + "\uD83D\uDCDD Список текущих девайсов: " +
+                propertiesHandler.getKeyboardsFromProperties() + "\n" +
+                CANCEL_MESSAGE;
+        if (!botPreviousMessageType.equals(AWAIT)) {
             List<String> keyboards = Arrays.asList(msg.trim().split(","));
             propertiesHandler.addKeyboardsInProperties(keyboards);
-            isInReplyAwait = false;
-            bot.sendMessage(chatId, "Клавиатуры добавлены");
+            botPreviousMessageType = AWAIT;
+            bot.sendMessage(chatId, "Клавиатуры добавлены!");
         } else {
-            bot.sendMessage(chatId, "Ведите Id оборудования");
+            bot.sendMessage(chatId, text);
             botPreviousMessageType = "keyboard";
-            isInReplyAwait = true;
         }
     }
 
     private void addHeadphonesCommand(Long chatId, String msg) {
-        if (isInReplyAwait) {
-            msg = msg.replace(" ", "");
+        String text = "Ведите Id наушников.\n" +
+                "\uD83D\uDCDD Список текущих девайсов: " +
+                propertiesHandler.getHeadphonesFromProperties() + "\n" +
+                CANCEL_MESSAGE;
+        if (!botPreviousMessageType.equals(AWAIT)) {
             List<String> headphones = Arrays.asList(msg.trim().split(","));
             propertiesHandler.addHeadphonesInProperties(headphones);
-            isInReplyAwait = false;
-            bot.sendMessage(chatId, "Наушники добавлены");
+            botPreviousMessageType = AWAIT;
+            bot.sendMessage(chatId, "Наушники добавлены!");
         } else {
-            bot.sendMessage(chatId, "Ведите Id оборудования");
+            bot.sendMessage(chatId, text);
             botPreviousMessageType = "headphones";
-            isInReplyAwait = true;
         }
     }
 
     private void deleteMouseCommand(Long chatId, String msg) {
-        if (isInReplyAwait) {
-            isInReplyAwait = false;
-            bot.sendMessage(chatId, "");
+        String[] mouses = propertiesHandler.getMousesFromProperties().split(",");
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (String mouse : mouses) {
+            if (mouse.equals("")) continue;
+            count++;
+            mouse = count + ". " + mouse.trim() + "\n";
+            sb.append(mouse);
+        }
+        String text = "Напиши номер, под которым находится девайс, который ты хочешь удалить.\n" +
+                CANCEL_MESSAGE + "\n" + "\n" +
+                "\uD83D\uDCDD Список текущих девайсов:\n" + sb;
+        if (count == 0) {
+            bot.sendMessage(chatId, "Нечего удалять\uD83E\uDD37\u200D♂️");
+            return;
+        }
+        if (!botPreviousMessageType.equals(AWAIT)) {
+            if (!StringUtils.isNumeric(msg)) {
+                bot.sendMessage(chatId, WRONG_FORMAT_MESSAGE);
+                return;
+            }
+            propertiesHandler.deleteMouseFromProperties(msg);
+            botPreviousMessageType = AWAIT;
+            bot.sendMessage(chatId, "Мышка удалена!");
         } else {
-            bot.sendMessage(chatId, "");
+            bot.sendMessage(chatId, text);
             botPreviousMessageType = "delete_mouse";
-            isInReplyAwait = true;
         }
     }
 
     private void deleteKeyboardCommand(Long chatId, String msg) {
-        if (isInReplyAwait) {
-            isInReplyAwait = false;
-            bot.sendMessage(chatId, "");
+        String[] keyboards = propertiesHandler.getKeyboardsFromProperties().split(",");
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (String keyboard : keyboards) {
+            if (keyboard.equals("")) continue;
+            count++;
+            keyboard = count + ". " + keyboard.trim() + "\n";
+            sb.append(keyboard);
+        }
+        String text = "Напиши номер, под которым находится девайс, который ты хочешь удалить.\n" +
+                CANCEL_MESSAGE + "\n" + "\n" +
+                "\uD83D\uDCDD Список текущих девайсов:\n" + sb;
+        if (count == 0) {
+            bot.sendMessage(chatId, "Нечего удалять\uD83E\uDD37\u200D♂️");
+            return;
+        }
+        if (!botPreviousMessageType.equals(AWAIT)) {
+            if (!StringUtils.isNumeric(msg)) {
+                bot.sendMessage(chatId, WRONG_FORMAT_MESSAGE);
+                return;
+            }
+            propertiesHandler.deleteKeyboardFromProperties(msg);
+            botPreviousMessageType = AWAIT;
+            bot.sendMessage(chatId, "Клавиатура удалена!");
         } else {
-            bot.sendMessage(chatId, "");
-            botPreviousMessageType = "delete_mouse";
-            isInReplyAwait = true;
+            bot.sendMessage(chatId, text);
+            botPreviousMessageType = "delete_keyboard";
         }
     }
 
-    private void deleteHeadphoneCommand(Long chatId, String msg) {
-        if (isInReplyAwait) {
-            isInReplyAwait = false;
-            bot.sendMessage(chatId, "");
+    private void deleteHeadphonesCommand(Long chatId, String msg) {
+        String[] headphones = propertiesHandler.getHeadphonesFromProperties().split(",");
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (String headphone : headphones) {
+            if (headphone.equals("")) continue;
+            count++;
+            headphone = count + ". " + headphone.trim() + "\n";
+            sb.append(headphone);
+        }
+        String text = "Напиши номер, под которым находится девайс, который ты хочешь удалить.\n" +
+                CANCEL_MESSAGE + "\n" + "\n" +
+                "\uD83D\uDCDD Список текущих девайсов:\n" + sb;
+        if (count == 0) {
+            bot.sendMessage(chatId, "Нечего удалять\uD83E\uDD37\u200D♂️");
+            return;
+        }
+        if (!botPreviousMessageType.equals(AWAIT)) {
+            if (!StringUtils.isNumeric(msg)) {
+                bot.sendMessage(chatId, WRONG_FORMAT_MESSAGE);
+                return;
+            }
+            propertiesHandler.deleteHeadphonesFromProperties(msg);
+            botPreviousMessageType = AWAIT;
+            bot.sendMessage(chatId, "Наушники удалены!");
         } else {
-            bot.sendMessage(chatId, "");
-            botPreviousMessageType = "delete_mouse";
-            isInReplyAwait = true;
+            bot.sendMessage(chatId, text);
+            botPreviousMessageType = "delete_headphones";
         }
     }
 
     private void setAlarmDelayCommand(Long chatId, String msg) {
-        if (isInReplyAwait) {
+        String text = "⏱️ Введите задержку перед тервогой в секундах.\n"
+                + "Текущая задержка: " +
+                propertiesHandler.getAlarmDelayFromProperties() + " сек.";
+        if (!botPreviousMessageType.equals(AWAIT)) {
             msg = msg.trim();
+            if (!StringUtils.isNumeric(msg)) {
+                bot.sendMessage(chatId, WRONG_FORMAT_MESSAGE);
+                return;
+            }
             propertiesHandler.setAlarmDelay(msg);
-            isInReplyAwait = false;
-            bot.sendMessage(chatId, "Задержка перед тревогой установлена");
+            botPreviousMessageType = AWAIT;
+            bot.sendMessage(chatId, "Задержка перед тревогой установлена.");
         } else {
-            bot.sendMessage(chatId, "Введите задержку перед тервогой в секундах");
+            bot.sendMessage(chatId, text);
             botPreviousMessageType = "alarm";
-            isInReplyAwait = true;
         }
     }
 
     private void setListenDelayCommand(Long chatId, String msg) {
-        if (isInReplyAwait) {
+        String text = "⏱️ Введите задержку между проверками в секундах.\n"
+                + "Текущая задержка: " +
+                propertiesHandler.getListenDelayFromProperties() + " сек.";
+        if (!botPreviousMessageType.equals(AWAIT)) {
             msg = msg.trim();
+            if (!StringUtils.isNumeric(msg)) {
+                bot.sendMessage(chatId, WRONG_FORMAT_MESSAGE);
+                return;
+            }
             propertiesHandler.setListenDelay(msg);
-            isInReplyAwait = false;
-            bot.sendMessage(chatId, "Задержка между проверками установлена");
+            botPreviousMessageType = AWAIT;
+            bot.sendMessage(chatId, "Задержка между проверками установлена.");
         } else {
-            bot.sendMessage(chatId, "Введите задержку между проверками в секундах");
+            bot.sendMessage(chatId, text);
             botPreviousMessageType = "listen";
-            isInReplyAwait = true;
         }
     }
 
@@ -176,18 +262,45 @@ public class MessageReplyHandler {
         bot.sendMessage(chatId, text);
     }
 
-    private void helpCommand(Long chatId) {
+    private void adminHelpCommand(Long chatId) {
         String text = """
-                Сводка по командам бота
-                Для добавления переферии используй команды:
+                📌 Сводка по командам бота 📌
+                                
+                Для просмотра текущих настроек напиши /get_current_settings
+                                
+                Для добавления девайсов используй:
                 /add_mouses чтобы добавить мышки
-                /add_keyboards чтобы добавить мышки
-                /add_headphones чтобы добавить мышки
-
+                /add_keyboards чтобы добавить клавиатуры
+                /add_headphones чтобы добавить наушники
+                                
+                Для удаления девайсов из списков используй:
+                /delete_mouse чтобы удалить мышки
+                /delete_keyboard чтобы удалить клавиатуры
+                /delete_headphone чтобы удалить наушники
+                                
                 Для изменения таймаутов напиши:
                 /set_listen_timeout чтобы установить периодичность проверки девайсов
                 /set_alarm_timeout чтобы установить задержку перед отправкой сообщения админу
                 """;
+        bot.sendMessage(chatId, text);
+    }
+
+    private void userHelpCommand(Long chatId) {
+        String text = "У пользователя нету команд";
+        bot.sendMessage(chatId, text);
+    }
+
+    private void currentSettings(Long chatId) {
+        String text = "Задержка между проверками: " + propertiesHandler.getListenDelayFromProperties() + " сек.\n" +
+                "Задержка перед тревогой: " + propertiesHandler.getAlarmDelayFromProperties() + " сек.\n" +
+                "Мышки: " + propertiesHandler.getMousesFromProperties() + "\n" +
+                "Клавиатуры: " + propertiesHandler.getKeyboardsFromProperties() + "\n" +
+                "Наушники: " + propertiesHandler.getHeadphonesFromProperties() + "\n";
+        bot.sendMessage(chatId, text);
+    }
+
+    private void cancelCommand(Long chatId) {
+        String text = "Операция отменена";
         bot.sendMessage(chatId, text);
     }
 
@@ -196,8 +309,15 @@ public class MessageReplyHandler {
         bot.sendMessage(chatId, text);
     }
 
-    public void sendAlarmMessage(Long chatId, String pcName, String device) {//h_disabled_on_ADM-01
-        String text = "⚠Предупреждение⚠\n" + "\n" + "На компьютере: " + pcName + "\n" + "Отключенно утройство: " + device;
+    public void sendAlarmMessage(Long chatId, String pcName, String device) {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+        String formatDateTime = now.format(format);
+        String text = "⚠Предупреждение⚠\n" +
+                "Время: " + formatDateTime +
+                "\n" +
+                "\nНа компьютере: " + pcName +
+                "\nОтключенно утройство: " + device;
         bot.sendMessage(chatId, text, getAlarmKeyboard(pcName));
     }
 
@@ -206,7 +326,7 @@ public class MessageReplyHandler {
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
         InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("Forget for 1h");
+        button.setText("\uD83D\uDD5B Игнорировать следующий час \uD83D\uDD50");
         button.setCallbackData("forget:" + pcName);
         rowInline.add(button);
 
