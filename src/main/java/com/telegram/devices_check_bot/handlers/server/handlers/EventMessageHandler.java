@@ -34,6 +34,8 @@ public class EventMessageHandler {
             case "m" -> device = "мышь \uD83D\uDDB1";
             case "k" -> device = "клавиатура ⌨";
             case "h" -> device = "наушники \uD83C\uDFA7";
+            case "w" -> device = System.getProperty("");
+            default -> device = "Unknown device";
         }
         messageReplyHandler.sendAlarmMessage(chatId, pcName, device);
     }

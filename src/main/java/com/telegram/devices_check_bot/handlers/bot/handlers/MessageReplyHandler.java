@@ -14,7 +14,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -41,8 +40,8 @@ public class MessageReplyHandler {
         if (chatId == Long.parseLong(propertiesHandler.getAdminChatId())) {
             if (!botPreviousMessageType.equals(AWAIT)) {
                 switch (botPreviousMessageType) {
-                    case "mouse" -> addMousesCommand(chatId, message);
-                    case "keyboard" -> addKeyboardsCommand(chatId, message);
+                    case "mouse" -> addMouseCommand(chatId, message);
+                    case "keyboard" -> addKeyboardCommand(chatId, message);
                     case "headphones" -> addHeadphonesCommand(chatId, message);
                     case "listen" -> setListenDelayCommand(chatId, message);
                     case "alarm" -> setAlarmDelayCommand(chatId, message);
@@ -55,8 +54,8 @@ public class MessageReplyHandler {
                 switch (message) {
                     case "/start" -> startCommand(chatId, username);
                     case "/help" -> adminHelpCommand(chatId);
-                    case "/add_mouses" -> addMousesCommand(chatId, message);
-                    case "/add_keyboards" -> addKeyboardsCommand(chatId, message);
+                    case "/add_mouses" -> addMouseCommand(chatId, message);
+                    case "/add_keyboards" -> addKeyboardCommand(chatId, message);
                     case "/add_headphones" -> addHeadphonesCommand(chatId, message);
                     case "/delete_mouse" -> deleteMouseCommand(chatId, message);
                     case "/delete_keyboard" -> deleteKeyboardCommand(chatId, message);
@@ -77,32 +76,30 @@ public class MessageReplyHandler {
         }
     }
 
-    private void addMousesCommand(Long chatId, String msg) {
+    private void addMouseCommand(Long chatId, String msg) {
         String text = "Ведите Id мышек.\n"
                 + "\uD83D\uDCDD Список текущих девайсов: " +
                 propertiesHandler.getMousesFromProperties() + "\n" +
                 CANCEL_MESSAGE;
         if (!botPreviousMessageType.equals(AWAIT)) {
-            List<String> mouses = Arrays.asList(msg.trim().split(","));
-            propertiesHandler.addMousesInProperties(mouses);
+            propertiesHandler.addMousesInProperties(msg);
             botPreviousMessageType = AWAIT;
-            bot.sendMessage(chatId, "Мышки добавлены!");
+            bot.sendMessage(chatId, "Мышка добавлена!");
         } else {
             bot.sendMessage(chatId, text);
             botPreviousMessageType = "mouse";
         }
     }
 
-    private void addKeyboardsCommand(Long chatId, String msg) {
+    private void addKeyboardCommand(Long chatId, String msg) {
         String text = "Ведите Id клавиатур.\n"
                 + "\uD83D\uDCDD Список текущих девайсов: " +
                 propertiesHandler.getKeyboardsFromProperties() + "\n" +
                 CANCEL_MESSAGE;
         if (!botPreviousMessageType.equals(AWAIT)) {
-            List<String> keyboards = Arrays.asList(msg.trim().split(","));
-            propertiesHandler.addKeyboardsInProperties(keyboards);
+            propertiesHandler.addKeyboardsInProperties(msg);
             botPreviousMessageType = AWAIT;
-            bot.sendMessage(chatId, "Клавиатуры добавлены!");
+            bot.sendMessage(chatId, "Клавиатура добавлена!");
         } else {
             bot.sendMessage(chatId, text);
             botPreviousMessageType = "keyboard";
@@ -115,8 +112,7 @@ public class MessageReplyHandler {
                 propertiesHandler.getHeadphonesFromProperties() + "\n" +
                 CANCEL_MESSAGE;
         if (!botPreviousMessageType.equals(AWAIT)) {
-            List<String> headphones = Arrays.asList(msg.trim().split(","));
-            propertiesHandler.addHeadphonesInProperties(headphones);
+            propertiesHandler.addHeadphonesInProperties(msg);
             botPreviousMessageType = AWAIT;
             bot.sendMessage(chatId, "Наушники добавлены!");
         } else {

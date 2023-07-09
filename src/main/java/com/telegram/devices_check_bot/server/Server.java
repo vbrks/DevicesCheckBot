@@ -28,7 +28,7 @@ public class Server {
     public void startSession() {
         new Thread(() -> {
             EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            EventLoopGroup workerGroup = new NioEventLoopGroup(57);
             try {
                 ServerBootstrap serverBootstrap = new ServerBootstrap();
                 serverBootstrap.group(bossGroup, workerGroup)

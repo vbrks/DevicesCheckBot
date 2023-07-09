@@ -20,7 +20,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, String message) throws InterruptedException {
         log.info("Received message from client: " + message);
-        if (message.equals("config")) {
+        if (message.contains("config")) {
             ctx.writeAndFlush("#config_data\n" + propertiesHandler.getAllConfigProperties());
         }else eventMessageHandler.alarmReply(message);
     }

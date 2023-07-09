@@ -126,35 +126,26 @@ public class PropertiesHandler {
 
     public void deleteMouseFromProperties(String deviceNumber) {
         int numToDelete = Integer.parseInt(deviceNumber);
-        List<String> mouses = new ArrayList<>(Arrays.stream(getMousesFromProperties().split(",")).toList());
-        for (String mouse : mouses) {
-            mouse = mouse.trim();
-        }
-        mouses.remove(numToDelete);
+        List<String> mouses = new ArrayList<>(Arrays.stream(getMousesFromProperties().split(", ")).toList());
+        mouses.remove(numToDelete - 1);
         replaceProperty(MOUSES, "", CONFIG_PROP_PATH);
-        addMousesInProperties(mouses);
+        addMousesInProperties(mouses.toString().replace("[", "").replace("]", ""));
     }
 
     public void deleteKeyboardFromProperties(String deviceNumber) {
         int numToDelete = Integer.parseInt(deviceNumber);
-        List<String> keyboards = new ArrayList<>(Arrays.stream(getKeyboardsFromProperties().split(",")).toList());
-        for (String keyboard : keyboards) {
-            keyboard = keyboard.trim();
-        }
-        keyboards.remove(numToDelete);
+        List<String> keyboards = new ArrayList<>(Arrays.stream(getKeyboardsFromProperties().split(", ")).toList());
+        keyboards.remove(numToDelete - 1);
         replaceProperty(KEYBOARDS, "", CONFIG_PROP_PATH);
-        addKeyboardsInProperties(keyboards);
+        addKeyboardsInProperties(keyboards.toString().replace("[", "").replace("]", ""));
     }
 
     public void deleteHeadphonesFromProperties(String deviceNumber) {
         int numToDelete = Integer.parseInt(deviceNumber);
-        List<String> headphones = new ArrayList<>(Arrays.stream(getHeadphonesFromProperties().split(",")).toList());
-        for (String headphone : headphones) {
-            headphone = headphone.trim();
-        }
-        headphones.remove(numToDelete);
+        List<String> headphones = new ArrayList<>(Arrays.stream(getHeadphonesFromProperties().split(", ")).toList());
+        headphones.remove(numToDelete - 1);
         replaceProperty(HEADPHONES, "", CONFIG_PROP_PATH);
-        addKeyboardsInProperties(headphones);
+        addHeadphonesInProperties(headphones.toString().replace("[", "").replace("]", ""));
     }
 
     public String getAlarmDelayFromProperties() {
@@ -167,48 +158,43 @@ public class PropertiesHandler {
         return String.valueOf(timeoutInSeconds);
     }
 
-    public void addMousesInProperties(List<String> property) {
-        String[] oldMouses = getMousesFromProperties().trim().split(",");
-        Set<String> mousesFromProperties = new TreeSet<>();
-
-        if (oldMouses.length > 0) {
-            mousesFromProperties = new TreeSet<>(List.of(oldMouses));
+    public void addMousesInProperties(String property) {
+        String mousesFromProperties = getMousesFromProperties().trim();
+        if (!mousesFromProperties.equals("")) {
+            if (!mousesFromProperties.contains(property)) {
+                mousesFromProperties += ", " + property;
+            } else return;
+        } else {
+            addProperty(MOUSES, property, CONFIG_PROP_PATH);
+            return;
         }
-        mousesFromProperties.addAll(property);
-        String newProperty = mousesFromProperties.toString()
-                .replace("[", "")
-                .replace("]", "")
-                .trim();
-        addProperty(MOUSES, newProperty, CONFIG_PROP_PATH);
+        addProperty(MOUSES, mousesFromProperties, CONFIG_PROP_PATH);
     }
 
-    public void addKeyboardsInProperties(List<String> property) {
-        String[] oldKeyboards = getKeyboardsFromProperties().trim().split(",");
-        Set<String> keyboardsFromProperties = new TreeSet<>();
-
-        if (oldKeyboards.length > 0) {
-            keyboardsFromProperties = new TreeSet<>(List.of(oldKeyboards));
+    public void addKeyboardsInProperties(String property) {
+        String keyboardsFromProperties = getKeyboardsFromProperties().trim();
+        if (!keyboardsFromProperties.equals("")) {
+            if (!keyboardsFromProperties.contains(property)) {
+                keyboardsFromProperties += ", " + property;
+            } else return;
+        } else {
+            addProperty(KEYBOARDS, property, CONFIG_PROP_PATH);
+            return;
         }
-        keyboardsFromProperties.addAll(property);
-        String newProperty = keyboardsFromProperties.toString()
-                .replace("[", "")
-                .replace("]", "")
-                .trim();
-        addProperty(KEYBOARDS, newProperty, CONFIG_PROP_PATH);
+        addProperty(KEYBOARDS, keyboardsFromProperties, CONFIG_PROP_PATH);
     }
 
-    public void addHeadphonesInProperties(List<String> property) {
-        String[] oldHeadphones = getHeadphonesFromProperties().trim().split(",");
-        Set<String> headphonesFromProperties = new TreeSet<>();
-        if (oldHeadphones.length > 0) {
-            headphonesFromProperties = new TreeSet<>(List.of(oldHeadphones));
+    public void addHeadphonesInProperties(String property) {
+        String headphonesFromProperties = getHeadphonesFromProperties().trim();
+        if (!headphonesFromProperties.equals("")) {
+            if (!headphonesFromProperties.contains(property)) {
+                headphonesFromProperties += ", " + property;
+            } else return;
+        } else {
+            replaceProperty(HEADPHONES, property, CONFIG_PROP_PATH);
+            return;
         }
-        headphonesFromProperties.addAll(property);
-        String newProperty = headphonesFromProperties.toString()
-                .replace("[", "")
-                .replace("]", "")
-                .trim();
-        addProperty(HEADPHONES, newProperty, CONFIG_PROP_PATH);
+        replaceProperty(HEADPHONES, headphonesFromProperties, CONFIG_PROP_PATH);
     }
 
     public void setAlarmDelay(String delay) {
