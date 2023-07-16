@@ -1,22 +1,54 @@
 package com.telegram.devices_check_bot.handlers;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
+import java.lang.reflect.ParameterizedType;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 @Component
 @Slf4j
 public class PropertiesHandler {
-
-    private static final String CONFIG_PROP_PATH = "src/main/resources/config.properties";
-    private static final String USERS_PROP_PATH = "src/main/resources/users.properties";
+    private static String path = new File(PropertiesHandler.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
+    private static final String CONFIG_PROP_PATH = path + "\\config.properties";
+    private static final String USERS_PROP_PATH = path + "\\users.properties";
     private static final String ERR = "ERROR: File not found!";
     private static final String MOUSES = "mouses";
     private static final String KEYBOARDS = "keyboards";
     private static final String HEADPHONES = "headphones";
+
+    @Autowired
+    private void createConfigFiles(){
+        if (Files.notExists(Path.of(CONFIG_PROP_PATH))){
+            try (FileWriter writer = new FileWriter(CONFIG_PROP_PATH, false)) {
+                String config = """
+                delay.alarm=3000
+                delay.listen=4000
+                headphones=
+                keyboards=
+                mouses=""";
+                writer.write(config);
+                writer.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (Files.notExists(Path.of(USERS_PROP_PATH))){
+            File usersConfig = new File(USERS_PROP_PATH);
+            try {
+                usersConfig.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     public String getPropertyByKey(String key, String path) {
         Properties properties = new Properties();

@@ -262,7 +262,7 @@ public class MessageReplyHandler {
         String text = """
                 📌 Сводка по командам бота 📌
                                 
-                Для просмотра текущих настроек напиши /get_current_settings
+                Для просмотра текущих настроек напиши /current_settings
                                 
                 Для добавления девайсов используй:
                 /add_mouses чтобы добавить мышки
@@ -314,22 +314,7 @@ public class MessageReplyHandler {
                 "\n" +
                 "\nНа компьютере: " + pcName +
                 "\nОтключенно утройство: " + device;
-        bot.sendMessage(chatId, text, getAlarmKeyboard(pcName));
-    }
-
-    private InlineKeyboardMarkup getAlarmKeyboard(String pcName) {
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-        InlineKeyboardButton button = new InlineKeyboardButton();
-        button.setText("\uD83D\uDD5B Игнорировать следующий час \uD83D\uDD50");
-        button.setCallbackData("forget:" + pcName);
-        rowInline.add(button);
-
-        rowsInline.add(rowInline);
-        markupInline.setKeyboard(rowsInline);
-
-        return markupInline;
+        bot.sendMessage(chatId, text, KeyboardHandler.getAlarmKeyboard(pcName));
     }
 }
 

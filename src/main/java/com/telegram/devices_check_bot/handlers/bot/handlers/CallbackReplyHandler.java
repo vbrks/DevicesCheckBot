@@ -31,16 +31,23 @@ public class CallbackReplyHandler {
         String action = callbackMessage[0];
         String pcName = callbackMessage[1];
 
-        LocalDateTime ignoreEnding = LocalDateTime.now().plusHours(1);
         DateTimeFormatter format = DateTimeFormatter.ofPattern("HH:mm:ss");
-        String ignoreEndingFormatted = ignoreEnding.format(format);
+
+        String alertMessageToAdmin = "Пользователь " + username + " поставил компьютер " + pcName + " в игнор!" + "\n" +
+                "Время: " + LocalDateTime.now().format(format);
+
+        String removeMessageToAdmin = "Пользователь " + username + " убрал компьютер " + pcName + " из игнора!" + "\n" +
+                "Время: " + LocalDateTime.now().format(format);
 
         if (action.equals("forget")) {
             pcIgnoreHandler.addPcToIgnoreList(pcName);
-            bot.sendMessage(chatId, "Оповещения от " + pcName + " будут игнорироваться до\n" + ignoreEndingFormatted);
+            bot.sendMessage(chatId, "Оповещения от " + pcName + " будут игнорироваться до перезагрузки!",
+                    KeyboardHandler.getCancelKeyboard(pcName));
+            bot.sendMessage(propertiesHandler.getAdminChatId(), alertMessageToAdmin);
+
+        } else if (action.equals("recall")) {
+            pcIgnoreHandler.removePcFromIgnoreList(pcName);
+            bot.sendMessage(propertiesHandler.getAdminChatId(), removeMessageToAdmin);
         }
-        String messageToAdmin = "Пользователь " + username + " поставил компьютер " + pcName + " в игнор на 1 час!" + "\n" +
-                "Время: " + LocalDateTime.now().format(format);
-        bot.sendMessage(propertiesHandler.getAdminChatId(), messageToAdmin);
     }
 }

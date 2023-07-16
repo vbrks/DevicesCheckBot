@@ -37,6 +37,8 @@ public class EventMessageHandler {
             case "w" -> device = System.getProperty("");
             default -> device = "Unknown device";
         }
-        messageReplyHandler.sendAlarmMessage(chatId, pcName, device);
+        if (chatId != Long.parseLong(propertiesHandler.getAdminChatId())) {
+            messageReplyHandler.sendAlarmMessage(chatId, pcName, device);
+        }
     }
 }
