@@ -6,6 +6,6 @@ This application works as a server for the telegram bot and at the same time rec
 
 The application occupies port 4242, so it must be open in the firewall.
 
-Used technologies and libraries: Spring, log4j, netty.
+Used technologies and libraries: Spring, lombok, netty, telegrambots.
 
 The client part is located in the repository at the link: https://github.com/vbrks/DevicesCheckClient
